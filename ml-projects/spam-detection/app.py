@@ -1,4 +1,11 @@
 import streamlit as st
+try:
+    import nltk
+except ModuleNotFoundError:
+    import subprocess, sys
+    subprocess.call([sys.executable, "-m", "pip", "install", "nltk"])
+    import nltk
+
 import pickle
 import nltk
 import string
