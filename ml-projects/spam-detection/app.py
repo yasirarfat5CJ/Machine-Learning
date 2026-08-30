@@ -1,73 +1,55 @@
 import streamlit as st
-try:
-    import nltk
-except ModuleNotFoundError:
-    import subprocess, sys
-    subprocess.call([sys.executable, "-m", "pip", "install", "nltk"])
-    import nltk
 
-import pickle
-import nltk
-import string
+from src.predict import predict_message
 
 
+st.title("Email / SMS Spam Classifier")
 
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
+input_sms = st.text_area(
+    "Enter a message to check:"
+)
 
-# Load model & vectorizer
-tfidf = pickle.load(open('vectorizer.pkl','rb'))
-model = pickle.load(open('model.pkl','rb'))
-
-ps = PorterStemmer()
-
-# ----------- Text Transformation (Must match training) -----------
-def transform_text(text):
-    text = text.lower()
-
-    tokens = nltk.word_tokenize(text)
-
-    y = []
-    for i in tokens:
-        if i.isalnum():
-            y.append(i)
-
-    tokens = y[:]
-    y.clear()
-
-    for i in tokens:
-        if i not in stopwords.words('english') and i not in string.punctuation:
-            y.append(i)
-
-    tokens = y[:]
-    y.clear()
-
-    for i in tokens:
-        y.append(ps.stem(i))
-
-    return " ".join(y)
-
-
-# ----------- Streamlit UI -----------------
-st.title(" Email / SMS Spam Classifier")
-
-input_sms = st.text_area(" Enter a message to check:")
 
 if st.button("Predict"):
-    if len(input_sms.strip()) == 0:
+
+    if not input_sms.strip():
+
         st.warning("Please enter a message first.")
+
     else:
-        # 1. Preprocess
-        transformed = transform_text(input_sms)
 
-        # 2. Vectorize
-        vector_input = tfidf.transform([transformed])
+        result = predict_message(input_sms)
 
-        # 3. Predict
-        result = model.predict(vector_input)[0]
-
-        # 4. Show result
-        if result == 1:
-            st.error(" SPAM Message Detected!")
+        # Display prediction
+        if result["prediction"] == 1:
+            st.error("SPAM Message Detected!")
         else:
-            st.success(" This message is NOT SPAM.")
+            st.success("This message is NOT SPAM.")
+
+        # Debug information
+        st.write("### Debug Information")
+
+        st.write(
+            "Preprocessed text:",
+            result["transformed_text"]
+        )
+
+        st.write(
+            "Number of TF-IDF features:",
+            result["non_zero_features"]
+        )
+
+        st.write(
+            "Recognized words:",
+            result["recognized_words"]
+        )
+
+        st.write(
+            "HAM probability:",
+            result["ham_probability"]
+        )
+
+        st.write(
+            "SPAM probability:",
+            result["spam_probability"]
+        )
