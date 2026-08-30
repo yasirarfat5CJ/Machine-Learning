@@ -1,2 +1,4 @@
-models
+models/*
+!models/model.pkl
+!models/tfidf.pkl
 PROJECT_EXPLANATION_AND_INTERVIEW_QA.md

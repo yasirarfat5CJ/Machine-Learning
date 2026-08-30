@@ -1,12 +1,17 @@
 import pickle
+from pathlib import Path
 
 from src.preprocessing import transform_text
 
 
-with open("models/tfidf.pkl", "rb") as file:
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_DIR = BASE_DIR / "models"
+
+
+with open(MODEL_DIR / "tfidf.pkl", "rb") as file:
     tfidf = pickle.load(file)
 
-with open("models/model.pkl", "rb") as file:
+with open(MODEL_DIR / "model.pkl", "rb") as file:
     model = pickle.load(file)
 
 
