@@ -1,9 +1,11 @@
+
 import pandas as pd
 import pickle
 
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.utils import resample
 
@@ -103,9 +105,11 @@ balanced_train_df = pd.concat(
 X_train_balanced = balanced_train_df["text"]
 y_train_balanced = balanced_train_df["target"]
 
+
 print("Original training class distribution:")
 print(y_train.value_counts())
-print("Balanced training class distribution:")
+
+print("\nBalanced training class distribution:")
 print(y_train_balanced.value_counts())
 
 
@@ -122,61 +126,184 @@ tfidf = TfidfVectorizer(
 # 10. Transform training data
 # -----------------------------------
 
-X_train_tfidf = tfidf.fit_transform(X_train_balanced)
+X_train_tfidf = tfidf.fit_transform(
+    X_train_balanced
+)
 
 
 # -----------------------------------
 # 11. Transform test data
 # -----------------------------------
 
-X_test_tfidf = tfidf.transform(X_test)
+X_test_tfidf = tfidf.transform(
+    X_test
+)
 
 
 # -----------------------------------
-# 12. Train model
+# 12. Train Multinomial Naive Bayes
 # -----------------------------------
 
-model = MultinomialNB()
+nb_model = MultinomialNB()
 
-model.fit(
+nb_model.fit(
     X_train_tfidf,
     y_train_balanced
 )
 
 
 # -----------------------------------
-# 13. Evaluate
+# 13. Train Logistic Regression
 # -----------------------------------
 
-y_pred = model.predict(X_test_tfidf)
+lr_model = LogisticRegression(
+    max_iter=1000
+)
 
-accuracy = accuracy_score(y_test, y_pred)
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
-f1 = f1_score(y_test, y_pred)
-
-print("Model trained successfully")
-print("Accuracy:", accuracy)
-print("Spam precision:", precision)
-print("Spam recall:", recall)
-print("Spam F1-score:", f1)
+lr_model.fit(
+    X_train_tfidf,
+    y_train_balanced
+)
 
 
 # -----------------------------------
-# 14. Save TF-IDF vectorizer
+# 14. Evaluate Naive Bayes
 # -----------------------------------
 
-with open("../models/tfidf.pkl", "wb") as file:
-    pickle.dump(tfidf, file)
+nb_pred = nb_model.predict(
+    X_test_tfidf
+)
+
+nb_accuracy = accuracy_score(
+    y_test,
+    nb_pred
+)
+
+nb_precision = precision_score(
+    y_test,
+    nb_pred
+)
+
+nb_recall = recall_score(
+    y_test,
+    nb_pred
+)
+
+nb_f1 = f1_score(
+    y_test,
+    nb_pred
+)
 
 
 # -----------------------------------
-# 15. Save model
+# 15. Evaluate Logistic Regression
 # -----------------------------------
 
-with open("../models/model.pkl", "wb") as file:
-    pickle.dump(model, file)
+lr_pred = lr_model.predict(
+    X_test_tfidf
+)
+
+lr_accuracy = accuracy_score(
+    y_test,
+    lr_pred
+)
+
+lr_precision = precision_score(
+    y_test,
+    lr_pred
+)
+
+lr_recall = recall_score(
+    y_test,
+    lr_pred
+)
+
+lr_f1 = f1_score(
+    y_test,
+    lr_pred
+)
 
 
-print("TF-IDF vectorizer saved")
-print("Model saved")
+# -----------------------------------
+# 16. Display Model Comparison
+# -----------------------------------
+
+print("\n===================================")
+print("       MODEL COMPARISON")
+print("===================================")
+
+print("\nMultinomial Naive Bayes")
+print("-----------------------------------")
+print("Accuracy :", nb_accuracy)
+print("Precision:", nb_precision)
+print("Recall   :", nb_recall)
+print("F1-score :", nb_f1)
+
+
+print("\nLogistic Regression")
+print("-----------------------------------")
+print("Accuracy :", lr_accuracy)
+print("Precision:", lr_precision)
+print("Recall   :", lr_recall)
+print("F1-score :", lr_f1)
+
+
+# -----------------------------------
+# 17. Select Best Model
+# -----------------------------------
+
+if lr_f1 > nb_f1:
+
+    best_model = lr_model
+    best_model_name = "Logistic Regression"
+    best_f1 = lr_f1
+
+else:
+
+    best_model = nb_model
+    best_model_name = "Multinomial Naive Bayes"
+    best_f1 = nb_f1
+
+
+print("\n===================================")
+print("          BEST MODEL")
+print("===================================")
+
+print("Selected Model:", best_model_name)
+print("F1-score      :", best_f1)
+
+
+# -----------------------------------
+# 18. Save TF-IDF vectorizer
+# -----------------------------------
+
+with open(
+    "../models/tfidf.pkl",
+    "wb"
+) as file:
+
+    pickle.dump(
+        tfidf,
+        file
+    )
+
+
+# -----------------------------------
+# 19. Save Best Model
+# -----------------------------------
+
+with open(
+    "../models/model.pkl",
+    "wb"
+) as file:
+
+    pickle.dump(
+        best_model,
+        file
+    )
+
+
+print("\nTF-IDF vectorizer saved")
+print("Best model saved as model.pkl")
+print("Training completed successfully")
+
